@@ -1,0 +1,27 @@
+Tsinghua University Network Authentication Protocol
+===================================================
+
+Protocol: HTTP
+Host: net.tsinghua.edu.cn
+
+Log in
+------
+
+Path: /cgi-bin/do_login
+Post: username=<username>&password=<password md5>&drop=0&type=1&n=100
+Success: <number>,<number>,<number>,<number>,<number>
+Failure: ip_exist_error
+
+Log out
+-------
+
+Path: /cgi-bin/do_logout
+Post: <null>
+Success: logout_ok
+
+Check status
+------------
+
+Path: /cgi-bin/do_login
+Post: action=check_online
+Success: <null>
