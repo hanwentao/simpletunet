@@ -1,7 +1,7 @@
-simpletunet: Simple Scripts for Tsinghua University Network
-===========================================================
+simpletunet: Simple Script for Tsinghua University Network
+==========================================================
 
-This bundle of scripts is used to log in/out to Tsinghua University Network.
+This script is used to log in to/out from Tsinghua University Network.
 
 ## Contacts
 

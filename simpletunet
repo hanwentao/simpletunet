@@ -1,0 +1,100 @@
+#!/bin/bash
+# simpletunet: Simple Script for Tsinghua University Network
+# Author: Wentao Han (wentao.han@gmail.com)
+
+usage() {
+    cat <<EOF
+usage: $0 <command> [<args>]
+
+The available commands are:
+    login   Log in
+        -u <username>
+        -p <password>
+        -m <password md5>
+    logout  Log out
+    status  Check the status
+EOF
+    exit 2
+}
+
+cmd_login() {
+    shift
+    while getopts "u:p:m:" name; do
+        case "$name" in
+            u)
+                username="$OPTARG"
+                ;;
+            p)
+                password="$OPTARG"
+                ;;
+            m)
+                password_md5="$OPTARG"
+                ;;
+        esac
+    done
+    if [ -z "$username" ]; then
+        read -p "Username: " -e -r username
+    fi
+    if [ -z "$password_md5" ]; then
+        if [ -z "$password" ]; then
+            read -p "Password: " -e -r -s password
+            echo ""
+        fi
+        password_md5=`echo -n "$password" | md5sum | awk '{ print $1 }'`
+        unset password
+    fi
+
+    response=`curl -s \
+                   --data-urlencode "username=$username" \
+                   --data-urlencode "password=$password_md5" \
+                   --data-urlencode "drop=0" \
+                   --data-urlencode "type=1" \
+                   --data-urlencode "n=100" \
+                   http://net.tsinghua.edu.cn/cgi-bin/do_login`
+    if echo $response | egrep -q "^[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$"; then
+        exit 0
+    else
+        echo "Failure: $response" >/dev/stderr
+        exit 1
+    fi
+}
+
+cmd_logout() {
+    response=`curl -s -d "" http://net.tsinghua.edu.cn/cgi-bin/do_logout`
+    if [ "$response" == "logout_ok" ]; then
+        exit 0
+    else
+        echo "Failure: $response" >/dev/stderr
+        exit 1
+    fi
+}
+
+cmd_status() {
+    response=`curl -s -d "action=check_online" http://net.tsinghua.edu.cn/cgi-bin/do_login`
+    if [ -n "$response" ]; then
+        echo "Authenticated"
+        exit 0
+    else
+        echo "Not authenticated"
+        exit 1
+    fi
+}
+
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+case "$1" in
+    login)
+        cmd_login "$@"
+        ;;
+    logout)
+        cmd_logout "$@"
+        ;;
+    status)
+        cmd_status "$@"
+        ;;
+    *)
+        usage
+        ;;
+esac
