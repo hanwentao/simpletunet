@@ -29,4 +29,6 @@ PASSWORD_MD5="$password_md5"
 EOF
 chmod 600 /etc/default/simpletunet
 
+touch /var/log/simpletunet.log
+
 echo "Installation completed"
