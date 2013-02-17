@@ -1,0 +1,60 @@
+#!/sbin/runscript
+# Copyright 1999-2008 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/dev-vcs/git/files/git-daemon.initd,v 1.1 2010/03/17 15:13:27 sping Exp $
+
+DESC="Tsinghua University Network"
+NAME=simpletunet
+DAEMON=/usr/local/sbin/$NAME
+DAEMON_ARGS=""
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+extra_commands="status"
+description_status="Gives the status of the connection."
+
+do_start() {
+    einfo $USERNAME
+#    if $DAEMON status >/dev/null 2>&1; then
+#        return 1
+#    fi
+    if ! $DAEMON login -u "$USERNAME" -m "$PASSWORD_MD5" -t >/dev/null 2>&1; then
+        return 1
+    fi
+    return 0
+}
+
+do_stop() {
+#    if ! $DAEMON status >/dev/null 2>&1; then
+#        return 1
+#    fi
+    if ! $DAEMON logout >/dev/null 2>&1; then
+        return 1
+    fi
+    return 0
+}
+
+
+depend() {
+	need net
+	use logger
+}
+
+start() {
+	ebegin "Starting simpletunet"
+		do_start
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping simpletunet"
+		do_stop
+	eend $?
+}
+
+status() {
+        $DAEMON status
+}
+
