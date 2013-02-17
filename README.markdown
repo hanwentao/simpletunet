@@ -5,4 +5,4 @@ This script is used to log in to/out from Tsinghua University Network.
 
 ## Contacts
 
-Author: Wentao Han (wentao.han@gmail.com)
+Authors: Wentao Han (wentao.han@gmail.com), Yi Yang (ahyangyi@gmail.com)
