@@ -8,7 +8,8 @@ case "$dist" in
         update-rc.d simpletunet defaults 10
         ;;
     Gentoo)
-        # TODO: Fill in installation code here @ahyangyi
+        cp -f examples/simpletunet-init.gentoo /etc/init.d/simpletunet
+        rc-update add simpletunet default
         ;;
     *)
         echo "Your distribution is not fully supported.  Please install init script by yourself."
