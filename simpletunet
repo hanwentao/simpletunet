@@ -2,6 +2,8 @@
 # simpletunet: Simple Script for Tsinghua University Network
 # Author: Wentao Han (wentao.han@gmail.com)
 
+LOG_PATH="/var/log/simpletunet.log"
+
 usage() {
     cat <<EOF
 usage: $0 <command> [<args>]
@@ -19,7 +21,7 @@ EOF
 
 cmd_login() {
     shift
-    while getopts "u:p:m:" name; do
+    while getopts "u:p:m:t" name; do
         case "$name" in
             u)
                 username="$OPTARG"
@@ -29,6 +31,9 @@ cmd_login() {
                 ;;
             m)
                 password_md5="$OPTARG"
+                ;;
+            t)
+                try_best="yes"
                 ;;
         esac
     done
@@ -44,27 +49,45 @@ cmd_login() {
         unset password
     fi
 
-    response=`curl -s \
-                   --data-urlencode "username=$username" \
-                   --data-urlencode "password=$password_md5" \
-                   --data-urlencode "drop=0" \
-                   --data-urlencode "type=1" \
-                   --data-urlencode "n=100" \
-                   http://net.tsinghua.edu.cn/cgi-bin/do_login`
-    if echo $response | egrep -q "^[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$"; then
-        exit 0
+    if [ -n "$try_best" ]; then
+        counter=3
+        interval=0
     else
-        echo "Failure: $response" >/dev/stderr
-        exit 1
+        counter=0
     fi
+    while [ $counter -ge 0 ]; do
+        response=`curl -s \
+                       --data-urlencode "username=$username" \
+                       --data-urlencode "password=$password_md5" \
+                       --data-urlencode "drop=0" \
+                       --data-urlencode "type=1" \
+                       --data-urlencode "n=100" \
+                       http://net.tsinghua.edu.cn/cgi-bin/do_login`
+        if echo $response | egrep -q "^[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$"; then
+            echo "Success"
+            [ -w $LOG_PATH ] && echo "[`date -R`] Login success" >>$LOG_PATH
+            exit 0
+        elif [ $counter -eq 0 ]; then
+            echo "Failure: $response" >&2
+            [ -w $LOG_PATH ] && echo "[`date -R`] Login failure: $response" >>$LOG_PATH
+            exit 1
+        fi
+        interval=$((interval + 10))
+        [ -w $LOG_PATH ] && echo "[`date -R`] Login failure, trying again after $interval seconds" >>$LOG_PATH
+        sleep $interval
+        : $((--counter))
+    done
 }
 
 cmd_logout() {
     response=`curl -s -d "" http://net.tsinghua.edu.cn/cgi-bin/do_logout`
     if [ "$response" == "logout_ok" ]; then
+        echo "Success"
+        [ -w $LOG_PATH ] && echo "[`date -R`] Logout success" >>$LOG_PATH
         exit 0
     else
-        echo "Failure: $response" >/dev/stderr
+        echo "Failure: $response" >&2
+        [ -w $LOG_PATH ] && echo "[`date -R`] Logout failure: $response" >>$LOG_PATH
         exit 1
     fi
 }
